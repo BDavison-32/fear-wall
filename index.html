@@ -302,7 +302,7 @@ body{margin:0}
       </div>
       <div class="panel hostonly" hidden>
         <h3>Copy for theme sorting</h3>
-        <p class="note">One answer per line, hidden answers left out. Paste into your sorting page.</p>
+        <p class="note">One answer per line, with its "me too" count. Hidden answers are left out. Paste into your sorting page.</p>
         <div class="row">
           <button class="pill line sm" data-copy="concern" type="button">Copy concerns</button>
           <button class="pill line sm" data-copy="use" type="button">Copy BlueGen uses</button>
@@ -582,15 +582,33 @@ document.querySelectorAll('[data-wq]').forEach(b=>b.addEventListener('click',()=
 /* ---------- host ---------- */
 $('hostFilter').addEventListener('change',e=>{ S.filter=e.target.value; renderHost(); });
 $('openChk').addEventListener('change',e=>{ S.fs.collection('config').doc('state').set({open:e.target.checked}).catch(()=>{}); });
-$('signInBtn').addEventListener('click',()=>{
+const AUTH_HELP = {
+  'auth/operation-not-allowed':'Google sign-in is switched off. In Firebase, go to Authentication › Sign-in method, turn on Google and Save.',
+  'auth/configuration-not-found':'Authentication isn\'t set up yet. In Firebase, open Authentication, click Get started, then turn on Google under Sign-in method.',
+  'auth/unauthorized-domain':'This web address isn\'t allowed. In Firebase, go to Authentication › Settings › Authorised domains and add '+location.hostname+'.',
+  'auth/popup-blocked':'Your browser blocked the sign-in window. Allow pop-ups for this site, or try again in Chrome or Edge.',
+  'auth/popup-closed-by-user':'The sign-in window was closed before you finished. Try again.',
+  'auth/cancelled-popup-request':'Sign-in was interrupted. Try again.',
+  'auth/network-request-failed':'Couldn\'t reach Google. Check your connection, or try outside the work VPN.'
+};
+function authMsg(e){ const c = e && e.code; return AUTH_HELP[c] || ("Sign-in didn't work" + (c ? ' ('+c+')' : '') + '. Try again in Chrome or Edge.'); }
+$('signInBtn').addEventListener('click', async ()=>{
   const p = new firebase.auth.GoogleAuthProvider();
-  S.auth.signInWithPopup(p).catch(e=>{ $('signNote').textContent = "Sign-in didn't work: " + (e && e.code ? e.code : 'try again') + '.'; });
+  p.setCustomParameters({prompt:'select_account'});
+  $('signNote').textContent = 'Opening Google sign-in…';
+  try{ await S.auth.signInWithPopup(p); S.authErr = ''; }
+  catch(e){
+    if(e && (e.code==='auth/popup-blocked' || e.code==='auth/operation-not-supported-in-this-environment')){
+      try{ await S.auth.signInWithRedirect(p); return; }catch(e2){ S.authErr = authMsg(e2); $('signNote').textContent = S.authErr; return; }
+    }
+    S.authErr = authMsg(e); $('signNote').textContent = S.authErr;
+  }
 });
 $('signOutBtn').addEventListener('click',()=>S.auth.signOut());
 function renderHost(){
   document.querySelectorAll('.hostonly').forEach(x=>x.hidden=!S.host);
   $('signInBtn').hidden = !!S.user; $('signOutBtn').hidden = !S.user;
-  $('signNote').textContent = !S.user ? 'Sign in with the Google account set up as host.'
+  $('signNote').textContent = !S.user ? (S.authErr || 'Sign in with the Google account set up as host.')
     : S.host ? `Signed in as ${S.user.email}.` : `${S.user.email} isn't set up as a host. Check the email address in the Firestore rules.`;
   if(!S.host) return;
   $('openChk').checked = S.open;
@@ -617,7 +635,8 @@ function renderHost(){
 }
 document.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click', async ()=>{
   const q = b.dataset.copy;
-  const text = visible().filter(a=>a.q===q).sort((x,y)=>x.at-y.at).map(a=>a.text.replace(/\s+/g,' ').trim()).join('\n');
+  const vc = voteCounts();
+  const text = visible().filter(a=>a.q===q).sort((x,y)=>x.at-y.at).map(a=>a.text.replace(/\s+/g,' ').trim() + (vc[a.id] ? ` [me too: ${vc[a.id]}]` : '')).join('\n');
   const box = $('copyBox'); box.value = text || 'No answers yet.'; box.hidden = false;
   const label = b.textContent;
   try{ await navigator.clipboard.writeText(box.value); b.textContent='Copied'; setTimeout(()=>b.textContent=label,2000); }
@@ -666,6 +685,7 @@ function boot(){
     firebase.initializeApp(firebaseConfig);
     S.fs = firebase.firestore(); S.auth = firebase.auth();
   }catch(e){ $('noDb').hidden=false; renderStatus(); return; }
+  S.auth.getRedirectResult().catch(e=>{ $('signNote').textContent = authMsg(e); S.authErr = authMsg(e); });
   S.auth.onAuthStateChanged(async u=>{
     S.user = u || null; S.host = false;
     if(u){
