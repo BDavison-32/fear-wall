@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Fear Wall</title>
+<!-- ==================================================================
+     SET-UP: your Firebase project (marcomms-fear-wall).
+     Who can use Host is set in the Firestore rules in the Firebase
+     console, not here, so no email address appears in this file.
+     ================================================================== -->
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCDrPS35rrNqM08znAxuQMOkHYxkfkOBTg",
+  authDomain: "marcomms-fear-wall.firebaseapp.com",
+  projectId: "marcomms-fear-wall",
+  storageBucket: "marcomms-fear-wall.firebasestorage.app",
+  messagingSenderId: "890459340712",
+  appId: "1:890459340712:web:39309a3179c127c9e1a79d"
+};
+</script>
+<!-- ======================= END OF SET-UP ========================== -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,300;6..12,400;6..12,600;6..12,700;6..12,800;6..12,900&display=swap">
+<style>
+/* Layout: website-style navy "silk" hero with white cards overlapping it for the phone form;
+   dark navy leaderboard dashboard and word map for the projector; light host console.
+   Deliberately one brand look (not theme-switching), every colour set explicitly. */
+:root{
+  --navy-950:#0A1230; --navy-900:#111A36; --navy-850:#16204A; --navy-800:#1A2550; --edge:#2B3766;
+  --azure:#0B8FD6; --azure-dk:#0071B9; --cyan:#1BA3E0; --sky:#8FD6F5; --teal:#42C8BE;
+  --ink:#0D1B3E; --muted:#5E6E86; --soft:#A9B6D3; --line:#DCE7F2; --ice:#EEF6FC; --paper:#F5F8FC; --white:#FFFFFF;
+  --danger:#C0392B;
+  --display:'Nunito Sans','Segoe UI',Arial,sans-serif;
+  --body:'Nunito Sans','Segoe UI',Arial,sans-serif;
+  color-scheme:light;
+}
+html,body{background:var(--paper);color:var(--ink)}
+body{font-family:var(--body);font-size:16px;line-height:1.5}
+*{box-sizing:border-box}
+h1,h2,h3,h4{margin:0;text-wrap:balance}
+p{margin:0}
+button,select,textarea,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- top bar ---------- */
+.bar{background:var(--white);border-bottom:1px solid var(--line);padding-inline:16px;position:sticky;top:env(safe-area-inset-top,0px);z-index:20}
+.bar-in{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:18px;min-height:64px}
+.brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.brand b{font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.02em;color:var(--ink);text-transform:uppercase}
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-left:auto}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{border:0;background:none;border-radius:999px;padding:9px 16px;font-weight:500;font-size:14px;color:var(--ink);cursor:pointer;white-space:nowrap}
+.tabs button:hover{background:var(--ice)}
+.tabs button[aria-selected="true"]{background:var(--azure);color:var(--white)}
+@media (max-width:560px){.brand b{display:none}.tabs{margin-left:0}}
+
+/* ---------- silk backgrounds ---------- */
+.silk{position:relative;background:radial-gradient(120% 90% at 85% 10%,#1D3B7A 0%,rgba(29,59,122,0) 55%),radial-gradient(90% 80% at 10% 100%,#132E66 0%,rgba(19,46,102,0) 60%),var(--navy-950);color:var(--white);overflow:hidden;isolation:isolate}
+.silk>canvas.waves{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+
+/* ---------- add view ---------- */
+.hero{padding-inline:16px}
+.hero-in{max-width:1100px;margin:0 auto;padding-block:56px 120px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--sky)}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(36px,6vw,64px);line-height:1.05;margin-top:12px}
+.hero p.lede{font-size:clamp(17px,2vw,20px);color:#D6E2F5;margin-top:14px;max-width:46ch}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+.live{width:9px;height:9px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 0 rgba(66,200,190,.6);animation:pulse 2s infinite}
+.live.off{background:#F2A900;animation:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(66,200,190,.55)}70%{box-shadow:0 0 0 10px rgba(66,200,190,0)}100%{box-shadow:0 0 0 0 rgba(66,200,190,0)}}
+
+.lift{padding-inline:16px;margin-top:-84px;position:relative;z-index:2}
+.lift-in{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:760px){.lift-in{grid-template-columns:1fr}}
+.qcard{background:var(--white);border-radius:16px;box-shadow:0 18px 40px rgba(10,18,48,.12);padding:26px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.qnum{font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.14em;color:var(--azure);text-transform:uppercase}
+.qcard h2{font-family:var(--display);font-weight:700;font-size:clamp(21px,2.4vw,26px);line-height:1.2;color:var(--ink)}
+textarea{width:100%;min-height:110px;resize:vertical;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--paper);transition:border-color .15s,background .15s}
+textarea:focus{border-color:var(--azure);background:var(--white);outline:none}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pill{border:0;border-radius:999px;background:var(--azure);color:var(--white);font-weight:700;padding:12px 24px;cursor:pointer;transition:background .15s,transform .1s}
+.pill:hover{background:var(--azure-dk)}
+.pill:active{transform:translateY(1px)}
+.pill:disabled{background:#B7C6D8;cursor:not-allowed}
+.pill.line{background:transparent;color:var(--azure);box-shadow:inset 0 0 0 1.5px var(--azure)}
+.pill.line:hover{background:var(--ice)}
+.pill.sm{padding:8px 14px;font-size:14px}
+.pill.danger{color:var(--danger);box-shadow:inset 0 0 0 1.5px var(--danger)}
+.count{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.added{font-size:14px;font-weight:500;color:#167A72}
+.notice{max-width:1100px;margin:0 auto;border-radius:12px;padding:14px 18px;font-size:15px;background:#FFF4D6;color:var(--ink)}
+
+.others{padding-inline:16px;padding-block:48px 72px}
+.others-in{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.others h3{font-family:var(--display);font-weight:800;font-size:clamp(22px,3vw,30px);color:var(--ink)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border-radius:999px;border:1.5px solid var(--azure);background:var(--white);color:var(--azure);padding:7px 16px;font-size:14px;font-weight:500;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--azure);color:var(--white)}
+.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.group{background:var(--white);border-radius:16px;padding:18px;border:1px solid var(--line);display:flex;flex-direction:column;gap:10px;min-width:0}
+.group h4{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink);display:flex;justify-content:space-between;gap:10px}
+.group h4 span.n{color:var(--azure)}
+.ans{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:10px 12px;border-radius:10px;background:var(--paper)}
+.ans p{min-width:0;overflow-wrap:anywhere;font-size:15px}
+.metoo{flex-shrink:0;border-radius:999px;border:1.5px solid var(--azure);background:var(--white);color:var(--azure);font-size:12px;font-weight:700;padding:3px 10px;cursor:pointer;white-space:nowrap;font-variant-numeric:tabular-nums}
+.metoo[aria-pressed="true"]{background:var(--azure);color:var(--white)}
+.empty{border:1.5px dashed #9CC3E3;border-radius:16px;padding:24px;text-align:center;color:var(--muted);background:var(--white)}
+
+/* ---------- dark presentation views ---------- */
+.stage{min-height:calc(100vh - 64px);padding-inline:16px;padding-block:28px 48px}
+.stage:fullscreen{min-height:100vh;padding-block:3vh}
+.board{max-width:1400px;margin:0 auto;background:rgba(26,37,80,.92);border:1px solid var(--edge);border-radius:22px;padding:clamp(18px,2.4vw,36px);box-shadow:0 30px 80px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:clamp(18px,2vw,28px)}
+.board-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.board-head h2{font-family:var(--display);font-weight:800;font-size:clamp(24px,3vw,40px);line-height:1.1}
+.board-head .eyebrow{display:block;margin-bottom:6px}
+.livetag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+.ghost{border:1px solid var(--edge);background:var(--navy-900);color:#DCE6F7;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer}
+.ghost:hover{border-color:var(--cyan);color:var(--white)}
+.ghost[aria-pressed="true"]{background:var(--azure);border-color:var(--azure);color:var(--white)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(10px,1.4vw,18px)}
+@media (max-width:820px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--navy-900);border:1px solid var(--edge);border-radius:16px;padding:clamp(14px,1.6vw,24px) 14px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0}
+.kpi b{font-family:var(--body);font-weight:900;font-size:clamp(28px,3.4vw,52px);line-height:1.05;color:var(--cyan);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.kpi b.word{font-size:clamp(18px,2vw,30px)}
+.kpi span{font-size:clamp(10px,.9vw,13px);font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--soft)}
+.boards2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(18px,2.4vw,40px)}
+@media (max-width:980px){.boards2{grid-template-columns:1fr}}
+.lb{display:flex;flex-direction:column;gap:14px;min-width:0}
+.lb-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.lb-head h3{font-family:var(--body);font-weight:700;font-size:clamp(18px,1.7vw,24px)}
+.lbrow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.4fr) 56px;gap:8px 18px;align-items:center;transition:opacity .3s}
+.lbrow.done{opacity:.38}
+.lbname b{display:block;font-weight:700;font-size:clamp(15px,1.25vw,19px);color:var(--white);line-height:1.25}
+.lbname small{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin-top:2px}
+.track{position:relative;height:clamp(20px,1.8vw,28px);border-radius:7px;background:var(--navy-900);border:1px solid var(--edge);overflow:hidden}
+.track::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent calc(25% - 1px),rgba(255,255,255,.08) 25%,transparent calc(25% + 1px),transparent calc(50% - 1px),rgba(255,255,255,.08) 50%,transparent calc(50% + 1px),transparent calc(75% - 1px),rgba(255,255,255,.08) 75%,transparent calc(75% + 1px))}
+.fill{position:absolute;inset:0 auto 0 0;border-radius:6px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.val{font-weight:900;font-size:clamp(18px,1.6vw,24px);color:var(--cyan);text-align:right;font-variant-numeric:tabular-nums}
+.lbmeta{grid-column:1 / -1;display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--soft);margin-top:-2px}
+.readlink{background:none;border:0;padding:0;color:var(--cyan);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.quotes{grid-column:1 / -1;display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:var(--navy-900);border:1px solid var(--edge);border-radius:12px}
+.quotes p{font-size:clamp(14px,1.1vw,17px);color:#E3EBF8;overflow-wrap:anywhere}
+.quotes p::before{content:"“";color:var(--cyan);font-weight:900;margin-right:4px}
+.waiting{font-size:13px;color:var(--soft);padding:10px 12px;border:1px dashed var(--edge);border-radius:12px}
+.darkempty{border:1px dashed var(--edge);border-radius:14px;padding:26px;text-align:center;color:var(--soft)}
+.tickpill{display:inline-block;margin-left:8px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy-950);background:var(--teal);border-radius:999px;padding:2px 8px;vertical-align:middle}
+
+/* word map */
+.cloudwrap{position:relative;background:var(--navy-900);border:1px solid var(--edge);border-radius:18px;min-height:clamp(320px,52vh,640px);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cloudwrap svg{width:100%;height:clamp(320px,52vh,640px);display:block}
+.cloudwrap text{font-family:var(--display);font-weight:800;animation:pop .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+.cloudwrap text{transform-box:fill-box;transform-origin:center}
+.summaries{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:820px){.summaries{grid-template-columns:1fr}}
+.sumcard{background:var(--navy-900);border:1px solid var(--edge);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px}
+.sumcard p{font-size:clamp(15px,1.3vw,19px);line-height:1.5;color:#E3EBF8}
+.themechips{display:flex;flex-wrap:wrap;gap:8px}
+.tchip{border:1px solid var(--edge);background:var(--navy-900);border-radius:999px;padding:6px 12px;font-size:13px;color:#DCE6F7}
+.tchip b{color:var(--cyan);margin-left:6px}
+
+/* ---------- host ---------- */
+.host{padding-inline:16px;padding-block:28px 64px}
+.host-in{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:340px 1fr;gap:20px}
+@media (max-width:920px){.host-in{grid-template-columns:1fr}}
+.hcol{display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel h3{font-family:var(--display);font-weight:700;font-size:17px;color:var(--ink)}
+.note{font-size:14px;color:var(--muted)}
+.check{display:flex;gap:10px;align-items:center;font-size:15px}
+.check input{width:18px;height:18px;accent-color:var(--azure);flex-shrink:0}
+.aitag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--azure)}
+.aitag::before{content:"";width:9px;height:9px;background:var(--teal)}
+.trow{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
+.tname{width:100%;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--paper);font-size:14px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--paper);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font-weight:900;font-size:26px;color:var(--azure);font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:8px}
+.item{background:var(--paper);border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start}
+.item.hid{opacity:.5}
+.meta{font-size:12px;color:var(--muted);margin-top:4px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.item select,.panel select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--white);font-size:14px;max-width:220px}
+@media (max-width:560px){.item{grid-template-columns:1fr}.acts{justify-content:flex-start}}
+.copybox{width:100%;min-height:120px;font-size:13px}
+.qlabel{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+</style>
+<style>
+body{margin:0}
+[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.single{display:flex;flex-direction:column;gap:10px}
+.lbrow .lbname b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.more{font-size:13px;color:var(--soft)}
+.signin{display:flex;flex-direction:column;gap:12px;max-width:420px}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand"><b>Fear Wall</b></div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button role="tab" data-view="add" aria-selected="true">Add yours</button>
+      <button role="tab" data-view="dash" aria-selected="false">Dashboard</button>
+      <button role="tab" data-view="words" aria-selected="false">Word map</button>
+      <button role="tab" data-view="host" aria-selected="false" id="t-host" hidden>Host</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ADD -->
+<section id="v-add">
+  <div class="silk hero">
+    <canvas class="waves" aria-hidden="true"></canvas>
+    <div class="hero-in">
+      <p class="eyebrow">SOCOTEC UK · BlueGen workshop</p>
+      <h1>The Fear Wall</h1>
+      <p class="lede">Two quick questions. Completely anonymous. Say it as it is.</p>
+      <p class="status"><span class="live" id="addDot"></span><span id="addStatus">Connecting</span></p>
+    </div>
+  </div>
+  <div class="lift">
+    <div class="lift-in" id="forms"></div>
+  </div>
+  <div class="others">
+    <div class="others-in">
+      <p class="notice" id="noDb" hidden>This page isn't connected to its database yet.</p>
+      <p class="notice" id="closedNote" hidden>Answers are closed for now. You can still read what others said and add a "me too".</p>
+      <h3>What others are saying</h3>
+      <div class="chips" role="group" aria-label="Question">
+        <button class="chip" data-oq="concern" aria-pressed="true">Concerns</button>
+        <button class="chip" data-oq="use" aria-pressed="false">BlueGen uses</button>
+      </div>
+      <p class="note">Tap "Me too" on anything you agree with. Nobody sees who tapped.</p>
+      <div id="othersBody"></div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="v-dash" class="silk stage" hidden>
+  <canvas class="waves" aria-hidden="true"></canvas>
+  <div class="board">
+    <div class="board-head">
+      <div>
+        <span class="eyebrow">What you told us</span>
+        <h2>The Fear Wall</h2>
+      </div>
+      <div class="row">
+        <span class="livetag"><span class="live" id="dashDot"></span><span id="dashLive">Live</span></span>
+        <button class="ghost fsbtn" type="button">Full screen</button>
+      </div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="boards2" id="boards"></div>
+  </div>
+</section>
+
+<!-- WORD MAP -->
+<section id="v-words" class="silk stage" hidden>
+  <canvas class="waves" aria-hidden="true"></canvas>
+  <div class="board">
+    <div class="board-head">
+      <div>
+        <span class="eyebrow">In your words</span>
+        <h2 id="wordsTitle">Word map</h2>
+      </div>
+      <div class="row">
+        <button class="ghost" data-wq="concern" aria-pressed="true" type="button">Concerns</button>
+        <button class="ghost" data-wq="use" aria-pressed="false" type="button">BlueGen uses</button>
+        <button class="ghost fsbtn" type="button">Full screen</button>
+      </div>
+    </div>
+    <div class="cloudwrap" id="cloud"></div>
+  </div>
+</section>
+
+<!-- HOST -->
+<section id="v-host" class="host" hidden>
+  <div class="host-in">
+    <div class="hcol">
+      <div class="panel" id="signPanel">
+        <h3>Host sign-in</h3>
+        <div class="signin">
+          <p class="note" id="signNote">Sign in with the Google account set up as host.</p>
+          <div class="row">
+            <button class="pill sm" id="signInBtn" type="button">Sign in with Google</button>
+            <button class="pill line sm" id="signOutBtn" type="button" hidden>Sign out</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel hostonly" hidden>
+        <h3>Answers</h3>
+        <label class="check"><input type="checkbox" id="openChk"> Taking answers</label>
+        <div class="stats" id="stats"></div>
+      </div>
+      <div class="panel hostonly" hidden>
+        <h3>Copy for theme sorting</h3>
+        <p class="note">One answer per line, hidden answers left out. Paste into your sorting page.</p>
+        <div class="row">
+          <button class="pill line sm" data-copy="concern" type="button">Copy concerns</button>
+          <button class="pill line sm" data-copy="use" type="button">Copy BlueGen uses</button>
+        </div>
+        <textarea id="copyBox" class="copybox" hidden readonly aria-label="Copied answers"></textarea>
+      </div>
+      <div class="panel hostonly" hidden>
+        <h3>Clear everything</h3>
+        <p class="note">Deletes every answer and "me too", so you can test and start fresh. This can't be undone.</p>
+        <button class="pill line sm danger" id="clearBtn" type="button">Clear everything</button>
+        <p class="note" id="clearMsg" aria-live="polite"></p>
+      </div>
+    </div>
+    <div class="panel hostonly" hidden>
+      <div class="row" style="justify-content:space-between">
+        <h3>All answers</h3>
+        <select id="hostFilter" aria-label="Filter by question">
+          <option value="all">Both questions</option>
+          <option value="concern">Concerns</option>
+          <option value="use">What we use BlueGen for</option>
+        </select>
+      </div>
+      <div id="hostList" class="list"></div>
+    </div>
+  </div>
+</section>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+
+
+const QUESTIONS = {
+  concern:{label:"What concerns you about AI at work?", ph:"Say it as it is. Nobody will know it was you.", short:"Concerns", board:"Concerns about AI", empty:"Concerns will appear here as people add them."},
+  use:{label:"What do you use BlueGen for today?", ph:"e.g. first drafts, summaries, images, nothing yet", short:"BlueGen uses", board:"What we use BlueGen for", empty:"BlueGen uses will appear here as people add them."}
+};
+const QK = ['concern','use'];
+const MAXLEN = 400;
+const S = {fs:null, auth:null, host:false, user:null, open:true, answers:[], votes:[], view:'add', oq:'concern', wq:'concern', filter:'all', confirmDel:null};
+
+const $ = id => document.getElementById(id);
+function el(tag, attrs, ...kids){
+  const n = document.createElement(tag);
+  if(attrs) for(const [k,v] of Object.entries(attrs)){
+    if(k==='class') n.className=v; else if(k==='text') n.textContent=v;
+    else if(k.startsWith('on')) n.addEventListener(k.slice(2),v);
+    else if(v===true) n.setAttribute(k,''); else if(v!==false && v!=null) n.setAttribute(k,v);
+  }
+  for(const c of kids) if(c!=null) n.append(c);
+  return n;
+}
+function myVotes(){ try{ return JSON.parse(localStorage.getItem('fwl-votes')||'{}'); }catch(e){ return {}; } }
+function saveMyVotes(v){ try{ localStorage.setItem('fwl-votes', JSON.stringify(v)); }catch(e){} }
+
+/* ---------- silk waves ---------- */
+function drawWaves(c){
+  const r = c.getBoundingClientRect(); if(!r.width) return;
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  c.width = r.width*dpr; c.height = r.height*dpr;
+  const g = c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const W=r.width, H=r.height;
+  for(let i=0;i<46;i++){
+    const t=i/46;
+    g.beginPath();
+    for(let x=-20;x<=W+20;x+=12){
+      const y = H*(.15+.75*t) + Math.sin(x/W*Math.PI*1.6 + t*5.2)*H*.11 + Math.sin(x/W*Math.PI*3.4 + t*2)*H*.035;
+      x===-20 ? g.moveTo(x,y) : g.lineTo(x,y);
+    }
+    g.strokeStyle = `rgba(${Math.round(60+90*t)},${Math.round(140+60*t)},235,${.035+.06*Math.sin(t*Math.PI)})`;
+    g.lineWidth = 1.2; g.stroke();
+  }
+}
+function paintVisibleWaves(){ document.querySelectorAll('section:not([hidden]) canvas.waves').forEach(drawWaves); }
+let waveT; addEventListener('resize',()=>{ clearTimeout(waveT); waveT=setTimeout(()=>{ paintVisibleWaves(); if(S.view==='words') renderWords(); },150); });
+
+
+
+/* ---------- views ---------- */
+function setView(v){
+  if(v==='host') $('t-host').hidden = false;
+  S.view=v;
+  for(const b of document.querySelectorAll('.tabs button')) b.setAttribute('aria-selected', String(b.dataset.view===v));
+  for(const id of ['add','dash','words','host']) $('v-'+id).hidden = id!==v;
+  requestAnimationFrame(()=>{ paintVisibleWaves(); if(v==='words') renderWords(); });
+}
+for(const b of document.querySelectorAll('.tabs button')) b.addEventListener('click',()=>setView(b.dataset.view));
+document.querySelectorAll('.fsbtn').forEach(b=>b.addEventListener('click',()=>{
+  const t = b.closest('section');
+  if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+  else if(t.requestFullscreen) t.requestFullscreen().catch(()=>{});
+}));
+document.addEventListener('fullscreenchange',()=>setTimeout(()=>{ paintVisibleWaves(); if(S.view==='words') renderWords(); },120));
+
+/* ---------- derived ---------- */
+const visible = () => S.answers.filter(a=>!a.hidden);
+function voteCounts(){ const c={}; for(const v of S.votes) c[v.a]=(c[v.a]||0)+1; return c; }
+function ranked(q){ const c = voteCounts(); return visible().filter(a=>a.q===q).sort((x,y)=>(c[y.id]||0)-(c[x.id]||0) || y.at-x.at); }
+
+function renderStatus(){
+  const txt = !S.fs ? 'Not connected' : S.open ? 'Open for answers' : 'Closed';
+  $('addStatus').textContent = txt;
+  for(const d of [$('addDot'),$('dashDot')]) d.classList.toggle('off', !S.fs || !S.open);
+  $('dashLive').textContent = !S.fs ? 'Not connected' : S.open ? 'Live · updating' : 'Closed';
+}
+
+/* ---------- add view ---------- */
+const drafts = {};
+function renderForms(){
+  const box = $('forms'); box.replaceChildren();
+  $('closedNote').hidden = !S.fs || S.open;
+  QK.forEach((k,i)=>{
+    const q = QUESTIONS[k];
+    const ta = el('textarea',{id:'ta-'+k, maxlength:String(MAXLEN), placeholder:q.ph, 'aria-label':q.label});
+    ta.value = drafts[k]||'';
+    const cnt = el('span',{class:'count'});
+    const ok = el('span',{class:'added', 'aria-live':'polite'});
+    const btn = el('button',{class:'pill', type:'button', text:'Add to the wall'});
+    const upd = ()=>{ drafts[k]=ta.value; cnt.textContent = `${ta.value.length}/${MAXLEN}`; btn.disabled = !S.fs || !S.open || !ta.value.trim(); };
+    ta.addEventListener('input', upd);
+    btn.addEventListener('click', async ()=>{
+      const text = ta.value.trim(); if(!text) return;
+      btn.disabled = true; ok.textContent='';
+      try{
+        await S.fs.collection('answers').add({q:k, text:text.slice(0,MAXLEN), hidden:false, at:firebase.firestore.FieldValue.serverTimestamp()});
+        ta.value=''; drafts[k]=''; ok.textContent='Added. Thank you. Add another if you like.';
+      }catch(e){
+        ok.textContent = S.open ? "That didn't go through. Check your connection and try again." : 'Answers are closed for now.';
+      }
+      upd();
+    });
+    upd();
+    box.append(el('div',{class:'qcard'}, el('p',{class:'qnum', text:`Question ${i+1} of 2`}), el('h2',{text:q.label}), ta, el('div',{class:'row'}, btn, cnt), ok));
+  });
+}
+document.querySelectorAll('[data-oq]').forEach(b=>b.addEventListener('click',()=>{
+  S.oq=b.dataset.oq; document.querySelectorAll('[data-oq]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); renderOthers();
+}));
+function metooBtn(a, counts, mine){
+  const n = counts[a.id]||0;
+  const b = el('button',{class:'metoo', type:'button', 'aria-pressed':String(!!mine[a.id]), 'aria-label':`Me too, ${n} so far`, text:`Me too · ${n}`});
+  b.disabled = !S.fs;
+  b.addEventListener('click', ()=>toggleVote(a.id));
+  return b;
+}
+async function toggleVote(id){
+  const mine = myVotes();
+  try{
+    if(mine[id]){ await S.fs.collection('votes').doc(mine[id]).delete(); delete mine[id]; }
+    else { const ref = S.fs.collection('votes').doc(); await ref.set({a:id, at:firebase.firestore.FieldValue.serverTimestamp()}); mine[id]=ref.id; }
+    saveMyVotes(mine); renderOthers();
+  }catch(e){}
+}
+function renderOthers(){
+  const counts = voteCounts(), mine = myVotes(), list = ranked(S.oq);
+  const body = $('othersBody'); body.replaceChildren();
+  if(!list.length){ body.append(el('div',{class:'empty', text:QUESTIONS[S.oq].empty})); return; }
+  body.append(el('div',{class:'group single'},
+    el('h4',null, el('span',{text:QUESTIONS[S.oq].label}), el('span',{class:'n', text:String(list.length)})),
+    ...list.map(a=>el('div',{class:'ans'}, el('p',{text:a.text}), metooBtn(a,counts,mine)))));
+}
+
+/* ---------- dashboard ---------- */
+const FILLS = ['linear-gradient(90deg,#256B76,#42C8BE)','linear-gradient(90deg,#0A2F63,#0B4F96)','linear-gradient(90deg,#0B3E7A,#0B6FC0)','linear-gradient(90deg,#0B4A8E,#0B8FD6)','linear-gradient(90deg,#0B5A92,#1BA3E0)','linear-gradient(90deg,#24467F,#4FA3E8)'];
+const TOP = 8;
+function renderDash(){
+  const counts = voteCounts(), vis = visible();
+  const totalVotes = vis.reduce((s,a)=>s+(counts[a.id]||0),0);
+  const k = $('kpis'); k.replaceChildren();
+  const kpi = (val, label) => el('div',{class:'kpi'}, el('b',{text:val}), el('span',{text:label}));
+  k.append(kpi(String(vis.length),'Answers'), kpi(String(vis.filter(a=>a.q==='concern').length),'Concerns'),
+    kpi(String(vis.filter(a=>a.q==='use').length),'BlueGen uses'), kpi(String(totalVotes),'Me toos'));
+  const boards = $('boards'); boards.replaceChildren();
+  for(const q of QK){
+    const list = ranked(q);
+    const lb = el('div',{class:'lb'}, el('div',{class:'lb-head'}, el('h3',{text:QUESTIONS[q].board}),
+      el('span',{class:'livetag'}, el('span',{class:'live'+(S.fs&&S.open?'':' off')}), el('span',{text:`${list.length} answer${list.length===1?'':'s'}`}))));
+    if(!list.length){ lb.append(el('div',{class:'darkempty', text:QUESTIONS[q].empty})); boards.append(lb); continue; }
+    const show = list.slice(0,TOP);
+    const max = Math.max(...show.map(a=>1+(counts[a.id]||0)));
+    show.forEach((a,i)=>{
+      const people = 1+(counts[a.id]||0);
+      const fill = el('div',{class:'fill', style:`width:0%;background:${FILLS[Math.min(i,FILLS.length-1)]}`});
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{ fill.style.width = (people/max*100)+'%'; }));
+      lb.append(el('div',{class:'lbrow'},
+        el('div',{class:'lbname'}, el('b',{text:a.text}), el('small',{text: people===1 ? 'Just this answer' : `${people-1} me too${people-1===1?'':'s'}`})),
+        el('div',{class:'track'}, fill),
+        el('div',{class:'val', text:String(people)})));
+    });
+    if(list.length>TOP) lb.append(el('p',{class:'more', text:`+ ${list.length-TOP} more answer${list.length-TOP===1?'':'s'}. Ranked by how many people agree.`}));
+    boards.append(lb);
+  }
+}
+
+/* ---------- word map ---------- */
+const STOP = new Set(("a about above after again against all also am an and any are aren't as at be because been before being below between both but by can can't cannot could couldn't did didn't do does doesn't doing don't down during each few for from further get gets getting got had hadn't has hasn't have haven't having he her here hers herself him himself his how i i'd i'll i'm i've if in into is isn't it it's its itself just let's like lot lots make makes me might more most much must my myself no nor not now of off on once only or other ought our ours ourselves out over own really same she should shouldn't so some something such than that that's the their theirs them themselves then there there's these they they'd they'll they're they've thing things this those though through to too under until up us use used uses using very via was wasn't way we we'd we'll we're we've well were weren't what what's when where which while who whom why will with won't would wouldn't yet you you'd you'll you're you've your yours yourself ai bluegen etc e.g eg ie maybe bit quite already still even want need going able sure think feel know").split(' '));
+function wordFreq(q){
+  const counts = {}, forms = {};
+  for(const a of visible().filter(x=>x.q===q)){
+    const words = a.text.toLowerCase().replace(/[’']/g,"'").match(/[a-z][a-z'\-]+/g) || [];
+    const seen = new Set();
+    for(let w of words){
+      w = w.replace(/^'+|'+$/g,'').replace(/'s$/,'');
+      if(w.length<3 || STOP.has(w)) continue;
+      if(seen.has(w)) continue; seen.add(w);
+      counts[w]=(counts[w]||0)+1;
+    }
+  }
+  // merge simple plurals
+  for(const w of Object.keys(counts)){
+    if(w.endsWith('s') && counts[w.slice(0,-1)]){ counts[w.slice(0,-1)]+=counts[w]; delete counts[w]; }
+  }
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0])).slice(0,70);
+}
+let measureCtx;
+function layoutCloud(entries){
+  measureCtx = measureCtx || document.createElement('canvas').getContext('2d');
+  const fmax = entries[0][1], fmin = entries[entries.length-1][1];
+  const placed = [];
+  const hit = (r)=>placed.some(p=>!(r.x+r.w<p.x || p.x+p.w<r.x || r.y+r.h<p.y || p.y+p.h<r.y));
+  entries.forEach(([w,f],i)=>{
+    const t = fmax===fmin ? 1 : (f-fmin)/(fmax-fmin);
+    const size = Math.round(18 + Math.sqrt(t)*70);
+    measureCtx.font = `800 ${size}px 'Nunito Sans', 'Segoe UI', Arial, sans-serif`;
+    const wd = measureCtx.measureText(w).width + 8, ht = size*0.95;
+    for(let s=0;s<4000;s++){
+      const ang = s*0.32, rad = 3.2*Math.sqrt(s)*3;
+      const cx = Math.cos(ang)*rad*1.7, cy = Math.sin(ang)*rad;
+      const r = {x:cx-wd/2, y:cy-ht/2, w:wd, h:ht};
+      if(!hit(r)){ placed.push({...r, word:w, f, size, cx, cy, t, i}); break; }
+    }
+  });
+  return placed;
+}
+function cloudColour(p){
+  if(p.i===0) return '#FFFFFF';
+  if(p.t>.6) return '#1BA3E0';
+  if(p.t>.3) return '#8FD6F5';
+  return ['#5D86C9','#42C8BE','#7FA6E0','#A9B6D3'][p.i%4];
+}
+function renderWords(){
+  if(S.view!=='words') return;
+  const q = S.wq;
+  document.querySelectorAll('[data-wq]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.wq===q)));
+  $('wordsTitle').textContent = q==='concern' ? 'What concerns us' : 'What we use BlueGen for';
+  const box = $('cloud'); box.replaceChildren();
+  const entries = wordFreq(q);
+  if(!entries.length){ box.append(el('p',{class:'darkempty', style:'border:0', text:'The word map builds as answers come in.'})); }
+  else {
+    const placed = layoutCloud(entries);
+    const minX = Math.min(...placed.map(p=>p.x)), maxX = Math.max(...placed.map(p=>p.x+p.w));
+    const minY = Math.min(...placed.map(p=>p.y)), maxY = Math.max(...placed.map(p=>p.y+p.h));
+    const pad = 30;
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS,'svg');
+    svg.setAttribute('viewBox', `${minX-pad} ${minY-pad} ${maxX-minX+pad*2} ${maxY-minY+pad*2}`);
+    svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+    svg.setAttribute('role','img');
+    svg.setAttribute('aria-label', 'Most used words: '+entries.slice(0,10).map(e=>e[0]).join(', '));
+    for(const p of placed){
+      const t = document.createElementNS(NS,'text');
+      t.setAttribute('x', p.cx); t.setAttribute('y', p.cy);
+      t.setAttribute('text-anchor','middle'); t.setAttribute('dominant-baseline','central');
+      t.setAttribute('font-size', p.size); t.setAttribute('fill', cloudColour(p));
+      t.style.animationDelay = Math.min(p.i*35, 1400)+'ms';
+      const title = document.createElementNS(NS,'title'); title.textContent = `${p.word}: in ${p.f} answer${p.f===1?'':'s'}`;
+      t.append(title); t.append(document.createTextNode(p.word));
+      svg.append(t);
+    }
+    box.append(svg);
+  }
+}
+document.querySelectorAll('[data-wq]').forEach(b=>b.addEventListener('click',()=>{ S.wq=b.dataset.wq; renderWords(); }));
+
+
+
+/* ---------- host ---------- */
+$('hostFilter').addEventListener('change',e=>{ S.filter=e.target.value; renderHost(); });
+$('openChk').addEventListener('change',e=>{ S.fs.collection('config').doc('state').set({open:e.target.checked}).catch(()=>{}); });
+$('signInBtn').addEventListener('click',()=>{
+  const p = new firebase.auth.GoogleAuthProvider();
+  S.auth.signInWithPopup(p).catch(e=>{ $('signNote').textContent = "Sign-in didn't work: " + (e && e.code ? e.code : 'try again') + '.'; });
+});
+$('signOutBtn').addEventListener('click',()=>S.auth.signOut());
+function renderHost(){
+  document.querySelectorAll('.hostonly').forEach(x=>x.hidden=!S.host);
+  $('signInBtn').hidden = !!S.user; $('signOutBtn').hidden = !S.user;
+  $('signNote').textContent = !S.user ? 'Sign in with the Google account set up as host.'
+    : S.host ? `Signed in as ${S.user.email}.` : `${S.user.email} isn't set up as a host. Check the email address in the Firestore rules.`;
+  if(!S.host) return;
+  $('openChk').checked = S.open;
+  const st = $('stats'); st.replaceChildren();
+  for(const k of QK) st.append(el('div',{class:'stat'}, el('b',{text:String(visible().filter(a=>a.q===k).length)}), el('span',{text:QUESTIONS[k].short})));
+  const counts = voteCounts();
+  const list = $('hostList'); list.replaceChildren();
+  const items = S.answers.filter(a=>S.filter==='all'||a.q===S.filter).sort((x,y)=>y.at-x.at);
+  if(!items.length) list.append(el('div',{class:'empty', text:'No answers yet. Share the link or QR code and they will appear here live.'}));
+  for(const a of items){
+    const ref = S.fs.collection('answers').doc(a.id);
+    const del = el('button',{class:'pill line sm'+(S.confirmDel===a.id?' danger':''), type:'button', text:S.confirmDel===a.id?'Confirm delete':'Delete'});
+    del.addEventListener('click',()=>{
+      if(S.confirmDel===a.id){ S.confirmDel=null; ref.delete().catch(()=>{}); }
+      else { S.confirmDel=a.id; renderHost(); }
+    });
+    const when = a.at ? new Date(a.at).toLocaleString('en-GB',{weekday:'short', hour:'2-digit', minute:'2-digit'}) : 'just now';
+    list.append(el('div',{class:'item'+(a.hidden?' hid':'')},
+      el('div',{style:'min-width:0'}, el('p',{text:a.text, style:'overflow-wrap:anywhere'}), el('p',{class:'meta', text:`${QUESTIONS[a.q].short} · ${counts[a.id]||0} me too · ${when}${a.hidden?' · hidden':''}`})),
+      el('div',{class:'acts'},
+        el('button',{class:'pill line sm', type:'button', text:a.hidden?'Show':'Hide', onclick:()=>ref.update({hidden:!a.hidden}).catch(()=>{})}),
+        del)));
+  }
+}
+document.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click', async ()=>{
+  const q = b.dataset.copy;
+  const text = visible().filter(a=>a.q===q).sort((x,y)=>x.at-y.at).map(a=>a.text.replace(/\s+/g,' ').trim()).join('\n');
+  const box = $('copyBox'); box.value = text || 'No answers yet.'; box.hidden = false;
+  const label = b.textContent;
+  try{ await navigator.clipboard.writeText(box.value); b.textContent='Copied'; setTimeout(()=>b.textContent=label,2000); }
+  catch(e){ box.focus(); box.select(); }
+}));
+let clearArmed = false;
+$('clearBtn').addEventListener('click', async ()=>{
+  const btn = $('clearBtn'), msg = $('clearMsg');
+  if(!clearArmed){
+    clearArmed = true; btn.textContent = 'Yes, delete it all'; msg.textContent = 'Press again within 5 seconds to confirm.';
+    setTimeout(()=>{ if(clearArmed){ clearArmed=false; btn.textContent='Clear everything'; msg.textContent=''; } }, 5000);
+    return;
+  }
+  clearArmed = false; btn.disabled = true; btn.textContent = 'Clearing…'; msg.textContent = '';
+  try{
+    for(const name of ['votes','answers']){
+      for(let i=0;i<20;i++){
+        const snap = await S.fs.collection(name).limit(400).get();
+        if(snap.empty) break;
+        const batch = S.fs.batch(); snap.docs.forEach(d=>batch.delete(d.ref)); await batch.commit();
+      }
+    }
+    saveMyVotes({});
+    msg.textContent = 'Cleared. The wall is empty.';
+  }catch(e){ msg.textContent = "Some things couldn't be deleted. Check you're signed in as host, then try again."; }
+  btn.disabled = false; btn.textContent = 'Clear everything';
+});
+
+/* ---------- render + boot ---------- */
+function renderAll(){ renderStatus(); renderForms(); renderOthers(); renderDash(); renderWords(); renderHost(); }
+function renderData(){ renderOthers(); renderDash(); renderWords(); renderHost(); }
+
+(function start(){
+  const h = (location.hash||'').slice(1);
+  const map = {dashboard:'dash', dash:'dash', words:'words', wordmap:'words', host:'host'};
+  setView(map[h] || 'add');
+  renderAll();
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ if(S.view==='words') renderWords(); });
+  boot();
+})();
+
+function boot(){
+  const configured = window.firebase && firebaseConfig.apiKey && !String(firebaseConfig.apiKey).startsWith('PASTE');
+  if(!configured){ $('noDb').hidden=false; renderStatus(); return; }
+  try{
+    firebase.initializeApp(firebaseConfig);
+    S.fs = firebase.firestore(); S.auth = firebase.auth();
+  }catch(e){ $('noDb').hidden=false; renderStatus(); return; }
+  S.auth.onAuthStateChanged(async u=>{
+    S.user = u || null; S.host = false;
+    if(u){
+      // Only accounts listed in the Firestore rules can write to config, so a successful write means host.
+      try{ await S.fs.collection('config').doc('hostcheck').set({at:firebase.firestore.FieldValue.serverTimestamp()}); S.host = true; }catch(e){ S.host = false; }
+    }
+    if(S.host) $('t-host').hidden = false;
+    renderHost();
+  });
+  S.fs.collection('config').doc('state').onSnapshot(snap=>{
+    const d = snap.exists ? snap.data() : {};
+    S.open = d.open!==false;
+    renderStatus(); renderForms(); renderData();
+  }, ()=>{});
+  let t;
+  S.fs.collection('answers').onSnapshot(snap=>{
+    S.answers = snap.docs.map(d=>{
+      const x = d.data({serverTimestamps:'estimate'}) || {};
+      return {id:d.id, q:String(x.q||''), text:String(x.text||''), hidden:!!x.hidden, at: x.at && x.at.toMillis ? x.at.toMillis() : Date.now()};
+    }).filter(a=>QUESTIONS[a.q]);
+    clearTimeout(t); t = setTimeout(renderData, 120);
+  }, ()=>{ $('noDb').hidden=false; $('noDb').textContent="Can't read the wall. Check the Firestore rules have been published."; });
+  S.fs.collection('votes').onSnapshot(snap=>{
+    S.votes = snap.docs.map(d=>({id:d.id, a:String((d.data()||{}).a||'')}));
+    renderOthers(); renderDash();
+  }, ()=>{});
+  renderStatus(); renderForms();
+}
+</script>
+</body>
+</html>
