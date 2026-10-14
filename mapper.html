@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Which Tasks Would You Hand Over?</title>
+<!-- ==================================================================
+     SET-UP: same Firebase project as the Fear Wall (marcomms-fear-wall).
+     ================================================================== -->
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCDrPS35rrNqM08znAxuQMOkHYxkfkOBTg",
+  authDomain: "marcomms-fear-wall.firebaseapp.com",
+  projectId: "marcomms-fear-wall",
+  storageBucket: "marcomms-fear-wall.firebasestorage.app",
+  messagingSenderId: "890459340712",
+  appId: "1:890459340712:web:39309a3179c127c9e1a79d"
+};
+</script>
+<!-- ======================= END OF SET-UP ========================== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,300;6..12,400;6..12,600;6..12,700;6..12,800;6..12,900&display=swap">
+<style>
+/* Layout: website-style navy "silk" hero with white cards overlapping it for the phone form;
+   dark navy leaderboard dashboard and word map for the projector; light host console.
+   Deliberately one brand look (not theme-switching), every colour set explicitly. */
+:root{
+  --navy-950:#0A1230; --navy-900:#111A36; --navy-850:#16204A; --navy-800:#1A2550; --edge:#2B3766;
+  --azure:#0B8FD6; --azure-dk:#0071B9; --cyan:#1BA3E0; --sky:#8FD6F5; --teal:#42C8BE;
+  --ink:#0D1B3E; --muted:#5E6E86; --soft:#A9B6D3; --line:#DCE7F2; --ice:#EEF6FC; --paper:#F5F8FC; --white:#FFFFFF;
+  --danger:#C0392B;
+  --display:'Nunito Sans','Segoe UI',Arial,sans-serif;
+  --body:'Nunito Sans','Segoe UI',Arial,sans-serif;
+  color-scheme:light;
+}
+html,body{background:var(--paper);color:var(--ink)}
+body{font-family:var(--body);font-size:16px;line-height:1.5}
+*{box-sizing:border-box}
+h1,h2,h3,h4{margin:0;text-wrap:balance}
+p{margin:0}
+button,select,textarea,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- top bar ---------- */
+.bar{background:var(--white);border-bottom:1px solid var(--line);padding-inline:16px;position:sticky;top:env(safe-area-inset-top,0px);z-index:20}
+.bar-in{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:18px;min-height:64px}
+.brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.brand b{font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.02em;color:var(--ink);text-transform:uppercase}
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-left:auto}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{border:0;background:none;border-radius:999px;padding:9px 16px;font-weight:500;font-size:14px;color:var(--ink);cursor:pointer;white-space:nowrap}
+.tabs button:hover{background:var(--ice)}
+.tabs button[aria-selected="true"]{background:var(--azure);color:var(--white)}
+@media (max-width:560px){.brand b{display:none}.tabs{margin-left:0}}
+
+/* ---------- silk backgrounds ---------- */
+.silk{position:relative;background:radial-gradient(120% 90% at 85% 10%,#1D3B7A 0%,rgba(29,59,122,0) 55%),radial-gradient(90% 80% at 10% 100%,#132E66 0%,rgba(19,46,102,0) 60%),var(--navy-950);color:var(--white);overflow:hidden;isolation:isolate}
+.silk>canvas.waves{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+
+/* ---------- add view ---------- */
+.hero{padding-inline:16px}
+.hero-in{max-width:1100px;margin:0 auto;padding-block:56px 120px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--sky)}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(36px,6vw,64px);line-height:1.05;margin-top:12px}
+.hero p.lede{font-size:clamp(17px,2vw,20px);color:#D6E2F5;margin-top:14px;max-width:46ch}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+.live{width:9px;height:9px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 0 rgba(66,200,190,.6);animation:pulse 2s infinite}
+.live.off{background:#F2A900;animation:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(66,200,190,.55)}70%{box-shadow:0 0 0 10px rgba(66,200,190,0)}100%{box-shadow:0 0 0 0 rgba(66,200,190,0)}}
+
+.lift{padding-inline:16px;margin-top:-84px;position:relative;z-index:2}
+.lift-in{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:760px){.lift-in{grid-template-columns:1fr}}
+.qcard{background:var(--white);border-radius:16px;box-shadow:0 18px 40px rgba(10,18,48,.12);padding:26px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.qnum{font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.14em;color:var(--azure);text-transform:uppercase}
+.qcard h2{font-family:var(--display);font-weight:700;font-size:clamp(21px,2.4vw,26px);line-height:1.2;color:var(--ink)}
+textarea{width:100%;min-height:110px;resize:vertical;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--paper);transition:border-color .15s,background .15s}
+textarea:focus{border-color:var(--azure);background:var(--white);outline:none}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pill{border:0;border-radius:999px;background:var(--azure);color:var(--white);font-weight:700;padding:12px 24px;cursor:pointer;transition:background .15s,transform .1s}
+.pill:hover{background:var(--azure-dk)}
+.pill:active{transform:translateY(1px)}
+.pill:disabled{background:#B7C6D8;cursor:not-allowed}
+.pill.line{background:transparent;color:var(--azure);box-shadow:inset 0 0 0 1.5px var(--azure)}
+.pill.line:hover{background:var(--ice)}
+.pill.sm{padding:8px 14px;font-size:14px}
+.pill.danger{color:var(--danger);box-shadow:inset 0 0 0 1.5px var(--danger)}
+.count{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.added{font-size:14px;font-weight:500;color:#167A72}
+.notice{max-width:1100px;margin:0 auto;border-radius:12px;padding:14px 18px;font-size:15px;background:#FFF4D6;color:var(--ink)}
+
+.others{padding-inline:16px;padding-block:48px 72px}
+.others-in{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.others h3{font-family:var(--display);font-weight:800;font-size:clamp(22px,3vw,30px);color:var(--ink)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border-radius:999px;border:1.5px solid var(--azure);background:var(--white);color:var(--azure);padding:7px 16px;font-size:14px;font-weight:500;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--azure);color:var(--white)}
+.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.group{background:var(--white);border-radius:16px;padding:18px;border:1px solid var(--line);display:flex;flex-direction:column;gap:10px;min-width:0}
+.group h4{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink);display:flex;justify-content:space-between;gap:10px}
+.group h4 span.n{color:var(--azure)}
+.ans{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:10px 12px;border-radius:10px;background:var(--paper)}
+.ans p{min-width:0;overflow-wrap:anywhere;font-size:15px}
+.metoo{flex-shrink:0;border-radius:999px;border:1.5px solid var(--azure);background:var(--white);color:var(--azure);font-size:12px;font-weight:700;padding:3px 10px;cursor:pointer;white-space:nowrap;font-variant-numeric:tabular-nums}
+.metoo[aria-pressed="true"]{background:var(--azure);color:var(--white)}
+.empty{border:1.5px dashed #9CC3E3;border-radius:16px;padding:24px;text-align:center;color:var(--muted);background:var(--white)}
+
+/* ---------- dark presentation views ---------- */
+.stage{min-height:calc(100vh - 64px);padding-inline:16px;padding-block:28px 48px}
+.stage:fullscreen{min-height:100vh;padding-block:3vh}
+.board{max-width:1400px;margin:0 auto;background:rgba(26,37,80,.92);border:1px solid var(--edge);border-radius:22px;padding:clamp(18px,2.4vw,36px);box-shadow:0 30px 80px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:clamp(18px,2vw,28px)}
+.board-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.board-head h2{font-family:var(--display);font-weight:800;font-size:clamp(24px,3vw,40px);line-height:1.1}
+.board-head .eyebrow{display:block;margin-bottom:6px}
+.livetag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+.ghost{border:1px solid var(--edge);background:var(--navy-900);color:#DCE6F7;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer}
+.ghost:hover{border-color:var(--cyan);color:var(--white)}
+.ghost[aria-pressed="true"]{background:var(--azure);border-color:var(--azure);color:var(--white)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(10px,1.4vw,18px)}
+@media (max-width:820px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--navy-900);border:1px solid var(--edge);border-radius:16px;padding:clamp(14px,1.6vw,24px) 14px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0}
+.kpi b{font-family:var(--body);font-weight:900;font-size:clamp(28px,3.4vw,52px);line-height:1.05;color:var(--cyan);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.kpi b.word{font-size:clamp(18px,2vw,30px)}
+.kpi span{font-size:clamp(10px,.9vw,13px);font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--soft)}
+.boards2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(18px,2.4vw,40px)}
+@media (max-width:980px){.boards2{grid-template-columns:1fr}}
+.lb{display:flex;flex-direction:column;gap:14px;min-width:0}
+.lb-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.lb-head h3{font-family:var(--body);font-weight:700;font-size:clamp(18px,1.7vw,24px)}
+.lbrow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.4fr) 56px;gap:8px 18px;align-items:center;transition:opacity .3s}
+.lbrow.done{opacity:.38}
+.lbname b{display:block;font-weight:700;font-size:clamp(15px,1.25vw,19px);color:var(--white);line-height:1.25}
+.lbname small{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin-top:2px}
+.track{position:relative;height:clamp(20px,1.8vw,28px);border-radius:7px;background:var(--navy-900);border:1px solid var(--edge);overflow:hidden}
+.track::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent calc(25% - 1px),rgba(255,255,255,.08) 25%,transparent calc(25% + 1px),transparent calc(50% - 1px),rgba(255,255,255,.08) 50%,transparent calc(50% + 1px),transparent calc(75% - 1px),rgba(255,255,255,.08) 75%,transparent calc(75% + 1px))}
+.fill{position:absolute;inset:0 auto 0 0;border-radius:6px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.val{font-weight:900;font-size:clamp(18px,1.6vw,24px);color:var(--cyan);text-align:right;font-variant-numeric:tabular-nums}
+.lbmeta{grid-column:1 / -1;display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--soft);margin-top:-2px}
+.readlink{background:none;border:0;padding:0;color:var(--cyan);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.quotes{grid-column:1 / -1;display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:var(--navy-900);border:1px solid var(--edge);border-radius:12px}
+.quotes p{font-size:clamp(14px,1.1vw,17px);color:#E3EBF8;overflow-wrap:anywhere}
+.quotes p::before{content:"“";color:var(--cyan);font-weight:900;margin-right:4px}
+.waiting{font-size:13px;color:var(--soft);padding:10px 12px;border:1px dashed var(--edge);border-radius:12px}
+.darkempty{border:1px dashed var(--edge);border-radius:14px;padding:26px;text-align:center;color:var(--soft)}
+.tickpill{display:inline-block;margin-left:8px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy-950);background:var(--teal);border-radius:999px;padding:2px 8px;vertical-align:middle}
+
+/* word map */
+.cloudwrap{position:relative;background:var(--navy-900);border:1px solid var(--edge);border-radius:18px;min-height:clamp(320px,52vh,640px);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cloudwrap svg{width:100%;height:clamp(320px,52vh,640px);display:block}
+.cloudwrap text{font-family:var(--display);font-weight:800;animation:pop .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+.cloudwrap text{transform-box:fill-box;transform-origin:center}
+.summaries{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:820px){.summaries{grid-template-columns:1fr}}
+.sumcard{background:var(--navy-900);border:1px solid var(--edge);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px}
+.sumcard p{font-size:clamp(15px,1.3vw,19px);line-height:1.5;color:#E3EBF8}
+.themechips{display:flex;flex-wrap:wrap;gap:8px}
+.tchip{border:1px solid var(--edge);background:var(--navy-900);border-radius:999px;padding:6px 12px;font-size:13px;color:#DCE6F7}
+.tchip b{color:var(--cyan);margin-left:6px}
+
+/* ---------- host ---------- */
+.host{padding-inline:16px;padding-block:28px 64px}
+.host-in{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:340px 1fr;gap:20px}
+@media (max-width:920px){.host-in{grid-template-columns:1fr}}
+.hcol{display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel h3{font-family:var(--display);font-weight:700;font-size:17px;color:var(--ink)}
+.note{font-size:14px;color:var(--muted)}
+.check{display:flex;gap:10px;align-items:center;font-size:15px}
+.check input{width:18px;height:18px;accent-color:var(--azure);flex-shrink:0}
+.aitag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--azure)}
+.aitag::before{content:"";width:9px;height:9px;background:var(--teal)}
+.trow{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
+.tname{width:100%;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--paper);font-size:14px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--paper);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font-weight:900;font-size:26px;color:var(--azure);font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:8px}
+.item{background:var(--paper);border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start}
+.item.hid{opacity:.5}
+.meta{font-size:12px;color:var(--muted);margin-top:4px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.item select,.panel select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--white);font-size:14px;max-width:220px}
+@media (max-width:560px){.item{grid-template-columns:1fr}.acts{justify-content:flex-start}}
+.copybox{width:100%;min-height:120px;font-size:13px}
+.qlabel{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+</style>
+<style>
+body{margin:0;overscroll-behavior-y:contain}
+[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --auto:#0B8FD6;--auto-lt:#E1F1FB;--assist:#2BB3A8;--assist-lt:#DDF5F2;--agent:#7B61D9;--agent-lt:#ECE6FA;--dot:#F2A900}
+
+/* add view */
+.hero-in{padding-block:40px 110px}
+.hero h1{font-size:clamp(32px,5.4vw,56px)}
+.addwrap{padding-inline:16px;margin-top:-80px;position:relative;z-index:2}
+.addwrap-in{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:20px;align-items:start}
+@media (max-width:860px){.addwrap-in{grid-template-columns:1fr}}
+.gpick{display:flex;flex-wrap:wrap;gap:8px}
+.gpick button{border:1.5px solid var(--line);background:var(--paper);border-radius:999px;padding:8px 16px;font-weight:700;font-size:15px;cursor:pointer}
+.gpick button[aria-pressed="true"]{background:var(--azure);border-color:var(--azure);color:#fff}
+.tagkey{display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--muted)}
+.tagkey div{display:flex;gap:10px;align-items:flex-start}
+.tagkey b{color:var(--ink)}
+.tk{width:12px;height:12px;border-radius:3px;flex-shrink:0;margin-top:5px}
+.listhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.listhead h2{font-family:var(--display);font-weight:800;font-size:22px}
+.dotsleft{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--ink)}
+.dotsleft i{width:14px;height:14px;border-radius:50%;background:var(--dot);display:block}
+.dotsleft i.used{background:#D7DEE8}
+.tasks{display:flex;flex-direction:column;gap:12px}
+.task{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;border-left:6px solid #C9D6E4}
+.task.automate{border-left-color:var(--auto)} .task.assist{border-left-color:var(--assist)} .task.agent{border-left-color:var(--agent)}
+.task p.tt{font-size:16px;font-weight:700;overflow-wrap:anywhere}
+.task small{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.ctrl{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:var(--white);padding:6px 11px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink)}
+.seg button+button{border-left:1.5px solid var(--line)}
+.seg button[aria-pressed="true"].automate{background:var(--auto);color:#fff}
+.seg button[aria-pressed="true"].assist{background:var(--assist);color:#fff}
+.seg button[aria-pressed="true"].agent{background:var(--agent);color:#fff}
+.seg button[aria-pressed="true"].on{background:var(--ink);color:#fff}
+.seglabel{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.vote{margin-left:auto;border:1.5px solid var(--dot);background:var(--white);color:#7A5300;border-radius:999px;padding:6px 14px;font-weight:800;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.vote i{width:12px;height:12px;border-radius:50%;background:var(--dot);display:block}
+.vote[aria-pressed="true"]{background:var(--dot);color:#3A2600}
+.vote[aria-pressed="true"] i{background:#fff}
+.vote:disabled{opacity:.45;cursor:not-allowed}
+.filter{display:flex;gap:6px;flex-wrap:wrap}
+
+/* matrix */
+.mx{display:grid;grid-template-columns:44px 1fr 1fr;grid-template-rows:1fr 1fr 40px;gap:14px;min-height:clamp(420px,62vh,760px)}
+.axisy{grid-row:1 / 3;display:flex;flex-direction:column;align-items:center;justify-content:space-between;color:var(--soft);font-size:12px;font-weight:800;letter-spacing:.12em}
+.axisy span.l{writing-mode:vertical-rl;transform:rotate(180deg);color:var(--sky);font-size:14px}
+.axisx{grid-column:2 / 4;display:flex;align-items:center;justify-content:space-between;color:var(--soft);font-size:12px;font-weight:800;letter-spacing:.12em}
+.axisx span.l{color:var(--sky);font-size:14px}
+.quad{background:var(--navy-900);border:1px solid var(--edge);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.quad.best{background:linear-gradient(160deg,#16326B,#122556);border-color:#2E5FB0}
+.quad h3{font-weight:800;font-size:clamp(16px,1.4vw,22px);display:flex;align-items:center;gap:10px}
+.quad h3 small{font-size:12px;font-weight:600;color:var(--soft)}
+.star{font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--navy-950);background:var(--teal);border-radius:999px;padding:3px 9px}
+.stickies{display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+.sticky{position:relative;max-width:260px;border-radius:8px;padding:8px 12px 8px 12px;font-size:clamp(13px,1vw,15px);font-weight:700;color:#0D1B3E;background:#E9EEF5;box-shadow:0 6px 14px rgba(0,0,0,.25);overflow-wrap:anywhere;animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.sticky.automate{background:#CFE9FA} .sticky.assist{background:#CDEFEB} .sticky.agent{background:#E3DCFA}
+.sticky .vb{position:absolute;top:-9px;right:-9px;min-width:24px;height:24px;border-radius:12px;background:var(--dot);color:#3A2600;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 6px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.tray{background:var(--navy-900);border:1px dashed var(--edge);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.tray h3{font-size:14px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--soft)}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--soft);align-items:center;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* results */
+.rank{display:flex;flex-direction:column;gap:10px}
+.rk{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,.9fr) 60px;gap:14px;align-items:center;padding:10px 12px;border-radius:14px;background:var(--navy-900);border:1px solid var(--edge)}
+.rk.top{background:linear-gradient(90deg,rgba(66,200,190,.18),rgba(66,200,190,.04));border-color:#2F8F88}
+.rk .n{font-family:var(--display);font-weight:900;font-size:22px;color:var(--sky);text-align:center}
+.rk b{display:block;font-weight:800;font-size:clamp(15px,1.25vw,19px);color:#fff;line-height:1.3;overflow-wrap:anywhere}
+.rk small{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.chip2{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 8px;color:#fff}
+.chip2.automate{background:var(--auto)} .chip2.assist{background:var(--assist)} .chip2.agent{background:var(--agent)} .chip2.q{background:#33416F} .chip2.g{background:transparent;border:1px solid var(--edge);color:var(--soft)}
+.dots{display:flex;gap:4px;flex-wrap:wrap}
+.dots i{width:14px;height:14px;border-radius:50%;background:var(--dot);display:block}
+.rk .v{font-weight:900;font-size:24px;color:var(--cyan);text-align:right;font-variant-numeric:tabular-nums}
+.pilot{font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--navy-950);background:var(--teal);border-radius:999px;padding:2px 8px;margin-left:8px;vertical-align:2px}
+.preload{min-height:140px}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand"><b>Which tasks would you hand over?</b></div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button role="tab" data-view="add" aria-selected="true">Add &amp; tag</button>
+      <button role="tab" data-view="matrix" aria-selected="false">Matrix</button>
+      <button role="tab" data-view="res" aria-selected="false">Votes</button>
+      <button role="tab" data-view="host" aria-selected="false" id="t-host" hidden>Host</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ADD -->
+<section id="v-add">
+  <div class="silk hero">
+    <canvas class="waves" aria-hidden="true"></canvas>
+    <div class="hero-in">
+      <p class="eyebrow">SOCOTEC UK · BlueGen workshop</p>
+      <h1>Which tasks would you hand over?</h1>
+      <p class="lede">List the repetitive bits of your week, writing or not. Tag each one, place it, then vote. Anonymous.</p>
+      <p class="status"><span class="live" id="addDot"></span><span id="addLive">Connecting…</span></p>
+    </div>
+  </div>
+  <div class="addwrap">
+    <div class="addwrap-in">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="qcard">
+          <p class="qnum">Your group</p>
+          <div class="gpick" id="gpick"></div>
+        </div>
+        <div class="qcard">
+          <p class="qnum">Add a task</p>
+          <h2>What do you do every week that you'd happily hand over?</h2>
+          <textarea id="taskIn" maxlength="200" placeholder="e.g. Chasing project teams for case study details"></textarea>
+          <div class="row"><button class="pill" id="addBtn" type="button" disabled>Add task</button><span class="count" id="cnt">0/200</span><span class="added" id="addMsg" aria-live="polite"></span></div>
+        </div>
+        <div class="qcard">
+          <p class="qnum">The three tags</p>
+          <div class="tagkey">
+            <div><i class="tk" style="background:var(--auto)"></i><span><b>Automate:</b> n8n runs it, and a person checks the result</span></div>
+            <div><i class="tk" style="background:var(--assist)"></i><span><b>Assist:</b> a saved prompt or agent helps you do it faster</span></div>
+            <div><i class="tk" style="background:var(--agent)"></i><span><b>Agent:</b> works on its own and checks back with you</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="qcard" style="gap:16px">
+        <div class="listhead">
+          <h2 id="listTitle">Tasks</h2>
+          <div class="dotsleft" id="dotsLeft" hidden></div>
+        </div>
+        <div class="filter" id="filter"></div>
+        <p class="note" id="phaseNote"></p>
+        <div class="tasks" id="tasks"></div>
+      </div>
+    </div>
+  </div>
+  <div style="height:56px"></div>
+</section>
+
+<!-- MATRIX -->
+<section id="v-matrix" class="silk stage" hidden>
+  <canvas class="waves" aria-hidden="true"></canvas>
+  <div class="board">
+    <div class="board-head">
+      <div><span class="eyebrow">Impact and effort</span><h2>Where might we start?</h2></div>
+      <div class="row">
+        <span class="legend"><span><i style="background:#CFE9FA"></i>Automate</span><span><i style="background:#CDEFEB"></i>Assist</span><span><i style="background:#E3DCFA"></i>Agent</span><span><i style="background:#F2A900;border-radius:50%"></i>Votes</span></span>
+        <span class="livetag"><span class="live" id="mxDot"></span><span id="mxLive">Live</span></span>
+        <button class="ghost fsbtn" type="button">Full screen</button>
+      </div>
+    </div>
+    <div class="mx" id="mx"></div>
+    <div class="tray" id="tray"></div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="v-res" class="silk stage" hidden>
+  <canvas class="waves" aria-hidden="true"></canvas>
+  <div class="board">
+    <div class="board-head">
+      <div><span class="eyebrow">The room's vote</span><h2>Our shortlist</h2></div>
+      <div class="row">
+        <span class="livetag"><span class="live" id="resDot"></span><span id="resLive">Live</span></span>
+        <button class="ghost fsbtn" type="button">Full screen</button>
+      </div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="rank" id="rank"></div>
+  </div>
+</section>
+
+<!-- HOST -->
+<section id="v-host" class="host" hidden>
+  <div class="host-in">
+    <div class="hcol">
+      <div class="panel">
+        <h3>Host sign-in</h3>
+        <p class="note" id="signNote">Sign in with the Google account set up as host.</p>
+        <div class="row">
+          <button class="pill sm" id="signInBtn" type="button">Sign in with Google</button>
+          <button class="pill line sm" id="signOutBtn" type="button" hidden>Sign out</button>
+        </div>
+      </div>
+      <div class="panel hostonly" hidden>
+        <h3>Stages</h3>
+        <label class="check"><input type="checkbox" id="openChk"> Taking new tasks</label>
+        <label class="check"><input type="checkbox" id="voteChk"> Voting open (3 dots each)</label>
+        <div class="stats" id="stats"></div>
+      </div>
+      <div class="panel hostonly" hidden>
+        <h3>Pre-load tasks</h3>
+        <p class="note">Paste the pre-work answers, one task per line. They're added under "Pre-work" so groups can tag and place them too.</p>
+        <textarea id="preIn" class="preload" placeholder="One task per line"></textarea>
+        <div class="row"><button class="pill sm" id="preBtn" type="button">Add these tasks</button><span class="note" id="preMsg" aria-live="polite"></span></div>
+      </div>
+      <div class="panel hostonly" hidden>
+        <h3>Copy the shortlist</h3>
+        <p class="note">For the pilots slide and the UK AI portfolio board.</p>
+        <div class="row"><button class="pill sm" id="shortBtn" type="button">Copy top 5</button><button class="pill line sm" id="copyBtn" type="button">Copy everything</button></div>
+        <textarea id="copyBox" class="copybox" hidden readonly aria-label="Copied results"></textarea>
+      </div>
+      <div class="panel hostonly" hidden>
+        <h3>Clear everything</h3>
+        <p class="note">Deletes every task and vote, including pre-loaded tasks. This can't be undone.</p>
+        <button class="pill line sm danger" id="clearBtn" type="button">Clear everything</button>
+        <p class="note" id="clearMsg" aria-live="polite"></p>
+      </div>
+    </div>
+    <div class="panel hostonly" hidden>
+      <h3>All tasks</h3>
+      <p class="note">Delete duplicates or anything that shouldn't be there.</p>
+      <div id="hostList" class="list"></div>
+    </div>
+  </div>
+</section>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const GROUPS = ['A','B','C','Teams'];           // "Pre-work" is added by the host
+const TAGS = {automate:'Automate', assist:'Assist', agent:'Agent'};
+const QUADS = [
+  {id:'hl', impact:'high', effort:'low', name:'Good places to start', sub:'Helpful, and not too hard', best:true},
+  {id:'hh', impact:'high', effort:'high', name:'Worth planning', sub:'Helpful, but more work'},
+  {id:'ll', impact:'low', effort:'low', name:"If there's time", sub:'Less helpful, but easy'},
+  {id:'lh', impact:'low', effort:'high', name:'Not for now', sub:'Less helpful, and more work'}];
+const DOTS = 3;
+const S = {fs:null, auth:null, host:false, user:null, open:true, voting:false, tasks:[], votes:[], view:'add', authErr:'', filter:'mine'};
+
+const $ = id => document.getElementById(id);
+function el(tag, attrs, ...kids){
+  const n = document.createElement(tag);
+  if(attrs) for(const [k,v] of Object.entries(attrs)){
+    if(k==='class') n.className=v; else if(k==='text') n.textContent=v; else if(k==='html') n.innerHTML=v;
+    else if(k.startsWith('on')) n.addEventListener(k.slice(2),v);
+    else if(v===true) n.setAttribute(k,''); else if(v!==false && v!=null) n.setAttribute(k,v);
+  }
+  for(const c of kids) if(c!=null) n.append(c);
+  return n;
+}
+function load(){ try{ return JSON.parse(localStorage.getItem('mapper-me')||'{}'); }catch(e){ return {}; } }
+function save(){ try{ localStorage.setItem('mapper-me', JSON.stringify(ME)); }catch(e){} }
+let ME = load(); ME.votes = ME.votes || {};   // {taskId: voteDocId}
+
+/* ---------- silk waves ---------- */
+function drawWaves(c){
+  const r = c.getBoundingClientRect(); if(!r.width) return;
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  c.width = r.width*dpr; c.height = r.height*dpr;
+  const g = c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const W=r.width, H=r.height;
+  for(let i=0;i<46;i++){
+    const t=i/46;
+    g.beginPath();
+    for(let x=-20;x<=W+20;x+=12){
+      const y = H*(.15+.75*t) + Math.sin(x/W*Math.PI*1.6 + t*5.2)*H*.11 + Math.sin(x/W*Math.PI*3.4 + t*2)*H*.035;
+      x===-20 ? g.moveTo(x,y) : g.lineTo(x,y);
+    }
+    g.strokeStyle = `rgba(${Math.round(60+90*t)},${Math.round(140+60*t)},235,${.035+.06*Math.sin(t*Math.PI)})`;
+    g.lineWidth = 1.2; g.stroke();
+  }
+}
+function paintVisibleWaves(){ document.querySelectorAll('section:not([hidden]) canvas.waves').forEach(drawWaves); }
+let waveT; addEventListener('resize',()=>{ clearTimeout(waveT); waveT=setTimeout(()=>{ paintVisibleWaves(); if(S.view==='words') renderWords(); },150); });
+
+
+function renderWords(){}
+
+/* ---------- views ---------- */
+function setView(v){
+  if(v==='host') $('t-host').hidden = false;
+  S.view=v;
+  for(const b of document.querySelectorAll('.tabs button')) b.setAttribute('aria-selected', String(b.dataset.view===v));
+  for(const id of ['add','matrix','res','host']) $('v-'+id).hidden = id!==v;
+  requestAnimationFrame(paintVisibleWaves);
+  renderAll();
+}
+for(const b of document.querySelectorAll('.tabs button')) b.addEventListener('click',()=>setView(b.dataset.view));
+document.querySelectorAll('.fsbtn').forEach(b=>b.addEventListener('click',()=>{
+  const t = b.closest('section');
+  if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+  else if(t.requestFullscreen) t.requestFullscreen().catch(()=>{});
+}));
+document.addEventListener('fullscreenchange',()=>setTimeout(paintVisibleWaves,120));
+
+/* ---------- helpers ---------- */
+function voteCount(id){ return S.votes.filter(v=>v.t===id).length; }
+function quadOf(t){ return QUADS.find(q=>q.impact===t.impact && q.effort===t.effort); }
+function myVotes(){ return Object.keys(ME.votes).filter(id=>S.tasks.some(t=>t.id===id)); }
+
+/* ---------- add view ---------- */
+function renderGroups(){
+  $('gpick').replaceChildren(...GROUPS.map(g=>el('button',{type:'button','aria-pressed':String(ME.group===g), text: g==='Teams' ? 'On Teams' : 'Group '+g,
+    onclick:()=>{ ME.group=g; save(); renderAdd(); }})));
+}
+$('taskIn').addEventListener('input',()=>{ const n=$('taskIn').value.trim().length; $('cnt').textContent=`${$('taskIn').value.length}/200`; $('addBtn').disabled = !(n>=3 && ME.group && S.fs && S.open); });
+$('addBtn').addEventListener('click', async ()=>{
+  const text = $('taskIn').value.trim().slice(0,200);
+  if(text.length<3 || !ME.group) return;
+  $('addBtn').disabled = true; $('addMsg').textContent='';
+  try{
+    await S.fs.collection('tasks').add({text, group:ME.group, tag:'', impact:'', effort:'', at:firebase.firestore.FieldValue.serverTimestamp()});
+    $('taskIn').value=''; $('cnt').textContent='0/200'; $('addMsg').textContent='Added. Now tag and place it.';
+    setTimeout(()=>$('addMsg').textContent='',2500);
+  }catch(e){ $('addMsg').textContent = S.open ? "That didn't save. Try again." : 'Adding tasks has closed.'; }
+});
+function seg(label, opts, cur, onPick){
+  return el('span',{class:'ctrl'}, el('span',{class:'seglabel', text:label}),
+    el('span',{class:'seg'}, ...opts.map(([val,txt,cls])=>el('button',{type:'button', class:cls||'on', 'aria-pressed':String(cur===val), text:txt, onclick:()=>onPick(cur===val?'':val)}))));
+}
+async function setField(t, field, val){
+  t[field]=val; renderAll();
+  try{ await S.fs.collection('tasks').doc(t.id).update({[field]:val}); }catch(e){}
+}
+async function toggleVote(t){
+  const mine = ME.votes[t.id];
+  try{
+    if(mine){ delete ME.votes[t.id]; save(); renderAll(); await S.fs.collection('mvotes').doc(mine).delete(); }
+    else{
+      if(myVotes().length>=DOTS) return;
+      const ref = S.fs.collection('mvotes').doc();
+      ME.votes[t.id]=ref.id; save(); renderAll();
+      await ref.set({t:t.id, at:firebase.firestore.FieldValue.serverTimestamp()});
+    }
+  }catch(e){ renderAll(); }
+}
+function renderAdd(){
+  renderGroups();
+  $('addLive').textContent = !S.fs ? 'Connecting…' : S.voting ? 'Voting is open' : S.open ? 'Live · adding tasks' : 'Adding tasks has closed';
+  $('addDot').classList.toggle('off', !S.fs || (!S.open && !S.voting));
+  $('taskIn').disabled = !S.open; $('taskIn').dispatchEvent(new Event('input'));
+  const groupsHere = [...new Set(S.tasks.map(t=>t.group))];
+  const fopts = [['mine', ME.group ? (ME.group==='Teams'?'Teams':'Group '+ME.group) : 'My group'], ['all','All tasks'], ...(groupsHere.includes('Pre-work')?[['Pre-work','Pre-work']]:[])];
+  if(!fopts.some(f=>f[0]===S.filter)) S.filter='mine';
+  $('filter').replaceChildren(...fopts.map(([k,t])=>el('button',{class:'chip', type:'button','aria-pressed':String(S.filter===k), text:t, onclick:()=>{ S.filter=k; renderAdd(); }})));
+  let list = S.tasks.slice();
+  if(S.filter==='mine') list = list.filter(t=>t.group===ME.group);
+  else if(S.filter==='Pre-work') list = list.filter(t=>t.group==='Pre-work');
+  const used = myVotes().length;
+  $('dotsLeft').hidden = !S.voting;
+  $('dotsLeft').replaceChildren(el('span',{text:`${DOTS-used} dot${DOTS-used===1?'':'s'} left`}), ...Array.from({length:DOTS},(_,i)=>el('i',{class:i<used?'used':''})));
+  $('listTitle').textContent = S.voting ? 'Vote for the ones to try first' : 'Tag and place each task';
+  $('phaseNote').textContent = S.voting ? 'Tap a dot to vote, tap again to take it back. Vote across every group, not just your own.'
+    : !ME.group ? 'Pick your group first.' : 'Tag it, then say how helpful it would be and how much work it might take. Rough is fine.';
+  const box = $('tasks'); box.replaceChildren();
+  if(!list.length){ box.append(el('div',{class:'empty', text: S.filter==='mine' ? 'No tasks from your group yet. Add the first one.' : 'No tasks yet.'})); return; }
+  for(const t of list){
+    const mine = !!ME.votes[t.id];
+    const ctrls = el('div',{class:'ctrl'},
+      seg('Tag', [['automate','Automate','automate'],['assist','Assist','assist'],['agent','Agent','agent']], t.tag, v=>setField(t,'tag',v)),
+      seg('Impact', [['high','High'],['low','Low']], t.impact, v=>setField(t,'impact',v)),
+      seg('Effort', [['low','Low'],['high','High']], t.effort, v=>setField(t,'effort',v)));
+    const vb = S.voting ? el('button',{class:'vote', type:'button','aria-pressed':String(mine), disabled: !mine && used>=DOTS, onclick:()=>toggleVote(t)}, el('i'), mine ? 'Voted' : 'Vote') : null;
+    const q = quadOf(t);
+    box.append(el('div',{class:'task '+(t.tag||'')},
+      el('div',{class:'row', style:'justify-content:space-between;align-items:flex-start'}, el('div',{style:'min-width:0;flex:1'}, el('p',{class:'tt', text:t.text}), el('small',{text:(t.group==='Pre-work'?'Pre-work':t.group==='Teams'?'On Teams':'Group '+t.group)+(q?' · '+q.name:'')})), vb),
+      S.voting ? null : ctrls));
+  }
+}
+
+/* ---------- matrix ---------- */
+function sticky(t){
+  const n = voteCount(t.id);
+  return el('div',{class:'sticky '+(t.tag||''), title: TAGS[t.tag]||'Not tagged'}, t.text, n ? el('span',{class:'vb', text:String(n)}) : null);
+}
+function renderMatrix(){
+  if(S.view!=='matrix') return;
+  const mx = $('mx'); mx.replaceChildren();
+  const byVotes = (a,b)=>voteCount(b.id)-voteCount(a.id);
+  mx.append(el('div',{class:'axisy'}, el('span',{text:'HIGH'}), el('span',{class:'l', text:'IMPACT'}), el('span',{text:'LOW'})));
+  for(const q of QUADS){
+    const items = S.tasks.filter(t=>t.impact===q.impact && t.effort===q.effort).sort(byVotes);
+    mx.append(el('div',{class:'quad'+(q.best?' best':'')},
+      el('h3',null, q.name, q.best ? el('span',{class:'star', text:'START HERE'}) : null, el('small',{text:q.sub})),
+      el('div',{class:'stickies'}, ...items.map(sticky))));
+  }
+  mx.append(el('div',{class:'axisx'}, el('span',{text:'LOW'}), el('span',{class:'l', text:'EFFORT'}), el('span',{text:'HIGH'})));
+  const un = S.tasks.filter(t=>!quadOf(t));
+  $('tray').hidden = !un.length;
+  $('tray').replaceChildren(el('h3',{text:`Not placed yet · ${un.length}`}), el('div',{class:'stickies'}, ...un.map(sticky)));
+  $('mxLive').textContent = !S.fs ? 'Not connected' : 'Live · updating';
+  $('mxDot').classList.toggle('off', !S.fs);
+}
+
+/* ---------- results ---------- */
+function ranked(){ return S.tasks.map(t=>({t, n:voteCount(t.id)})).sort((a,b)=>b.n-a.n || a.t.text.localeCompare(b.t.text)); }
+function renderResults(){
+  if(S.view!=='res') return;
+  const r = ranked(), voters = Math.round(S.votes.length/DOTS);
+  const kpi = (val, label, word) => el('div',{class:'kpi'}, el('b',{class:word?'word':null, text:val}), el('span',{text:label}));
+  const tagged = S.tasks.filter(t=>t.tag).length;
+  const best = S.tasks.filter(t=>t.impact==='high' && t.effort==='low').length;
+  $('kpis').replaceChildren(kpi(String(S.tasks.length),'Tasks listed'), kpi(S.tasks.length ? Math.round(tagged/S.tasks.length*100)+'%' : '–','Tagged'),
+    kpi(String(best),'Good places to start'), kpi(String(S.votes.length),'Dots used'));
+  const box = $('rank'); box.replaceChildren();
+  const shown = r.filter(x=>x.n).slice(0,10);
+  if(!shown.length){ box.append(el('div',{class:'darkempty', text: S.voting ? 'Votes appear here as people use their dots.' : 'Voting opens after tagging and placing. The host turns it on.'})); }
+  shown.forEach((x,i)=>{
+    const q = quadOf(x.t);
+    box.append(el('div',{class:'rk'+(i<2?' top':'')},
+      el('div',{class:'n', text:String(i+1)}),
+      el('div',null, el('b',null, x.t.text, i<2 ? el('span',{class:'pilot', text:'PILOT?'}) : null),
+        el('small',null, x.t.tag ? el('span',{class:'chip2 '+x.t.tag, text:TAGS[x.t.tag]}) : null, q ? el('span',{class:'chip2 q', text:q.name}) : null, el('span',{class:'chip2 g', text:x.t.group==='Pre-work'?'Pre-work':x.t.group==='Teams'?'Teams':'Group '+x.t.group}))),
+      el('div',{class:'dots'}, ...Array.from({length:x.n},()=>el('i'))),
+      el('div',{class:'v', text:String(x.n)})));
+  });
+  $('resLive').textContent = !S.fs ? 'Not connected' : S.voting ? 'Voting open' : 'Live';
+  $('resDot').classList.toggle('off', !S.fs);
+}
+
+/* ---------- host ---------- */
+const AUTH_HELP = {
+  'auth/operation-not-allowed':'Google sign-in is switched off in Firebase.',
+  'auth/unauthorized-domain':"This web address isn't in Firebase's authorised domains.",
+  'auth/popup-blocked':'Your browser blocked the sign-in window. Allow pop-ups, or try a private window.',
+  'auth/popup-closed-by-user':'The sign-in window was closed before you finished.'
+};
+function authMsg(e){ return AUTH_HELP[e && e.code] || "Sign-in didn't work" + (e && e.code ? ' ('+e.code+')' : '') + '. Try a private window.'; }
+$('signInBtn').addEventListener('click', async ()=>{
+  const p = new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({prompt:'select_account'});
+  try{ await S.auth.signInWithPopup(p); S.authErr=''; }
+  catch(e){ S.authErr = authMsg(e); renderHost(); }
+});
+$('signOutBtn').addEventListener('click',()=>S.auth.signOut());
+function setCfg(){ S.fs.collection('config').doc('mapper').set({open:$('openChk').checked, voting:$('voteChk').checked}).catch(()=>{}); }
+$('openChk').addEventListener('change',setCfg);
+$('voteChk').addEventListener('change',setCfg);
+$('preBtn').addEventListener('click', async ()=>{
+  const lines = $('preIn').value.split('\n').map(s=>s.replace(/^[-•*\d.)\s]+/,'').trim()).filter(s=>s.length>=3).map(s=>s.slice(0,200));
+  if(!lines.length) return;
+  $('preBtn').disabled = true;
+  try{
+    const b = S.fs.batch();
+    for(const text of lines) b.set(S.fs.collection('tasks').doc(), {text, group:'Pre-work', tag:'', impact:'', effort:'', at:firebase.firestore.FieldValue.serverTimestamp()});
+    await b.commit(); $('preIn').value=''; $('preMsg').textContent = `Added ${lines.length} task${lines.length===1?'':'s'}.`;
+  }catch(e){ $('preMsg').textContent = "Couldn't add them. Check you're signed in as host."; }
+  $('preBtn').disabled = false;
+});
+function renderHost(){
+  document.querySelectorAll('.hostonly').forEach(x=>x.hidden=!S.host);
+  $('signInBtn').hidden = !!S.user; $('signOutBtn').hidden = !S.user;
+  $('signNote').textContent = !S.user ? (S.authErr || 'Sign in with the Google account set up as host.')
+    : S.host ? `Signed in as ${S.user.email}.` : `${S.user.email} isn't set up as a host.`;
+  if(!S.host) return;
+  $('openChk').checked = S.open; $('voteChk').checked = S.voting;
+  $('stats').replaceChildren(
+    el('div',{class:'stat'}, el('b',{text:String(S.tasks.length)}), el('span',{text:'Tasks'})),
+    el('div',{class:'stat'}, el('b',{text:String(S.votes.length)}), el('span',{text:'Dots used'})));
+  const hl = $('hostList'); hl.replaceChildren();
+  for(const x of ranked()){
+    const q = quadOf(x.t);
+    hl.append(el('div',{class:'item'},
+      el('div',null, el('p',{text:x.t.text}), el('p',{class:'meta', text:[x.t.group, TAGS[x.t.tag]||'untagged', q?q.name:'not placed', x.n+' votes'].join(' · ')})),
+      el('div',{class:'acts'}, el('button',{class:'pill line sm danger', type:'button', text:'Delete', onclick:()=>S.fs.collection('tasks').doc(x.t.id).delete().catch(()=>{})}))));
+  }
+}
+async function copyOut(btn, label, text){
+  const box = $('copyBox'); box.value = text; box.hidden = false;
+  try{ await navigator.clipboard.writeText(text); btn.textContent='Copied'; setTimeout(()=>btn.textContent=label,2000); }
+  catch(e){ box.focus(); box.select(); }
+}
+const line = x => { const q=quadOf(x.t); return `${x.t.text} · ${x.n} vote${x.n===1?'':'s'} · ${TAGS[x.t.tag]||'untagged'} · ${q?q.name:'not placed'}`; };
+$('shortBtn').addEventListener('click',()=>{
+  const r = ranked().filter(x=>x.n).slice(0,5);
+  copyOut($('shortBtn'),'Copy top 5', ['OUR SHORTLIST', ...r.map((x,i)=>`${i+1}. ${line(x)}`)].join('\n'));
+});
+$('copyBtn').addEventListener('click',()=>{
+  const L=[];
+  for(const q of [...QUADS,{id:'none',name:'Not placed'}]){
+    const items = ranked().filter(x=> q.id==='none' ? !quadOf(x.t) : quadOf(x.t)===q);
+    if(!items.length) continue;
+    L.push(q.name.toUpperCase()); items.forEach(x=>L.push('- '+line(x)+` · ${x.t.group}`)); L.push('');
+  }
+  copyOut($('copyBtn'),'Copy everything', L.join('\n'));
+});
+let clearArmed=false;
+$('clearBtn').addEventListener('click', async ()=>{
+  const btn=$('clearBtn'), msg=$('clearMsg');
+  if(!clearArmed){ clearArmed=true; btn.textContent='Yes, delete everything'; msg.textContent='Press again within 5 seconds to confirm.'; setTimeout(()=>{ if(clearArmed){ clearArmed=false; btn.textContent='Clear everything'; msg.textContent=''; } },5000); return; }
+  clearArmed=false; btn.disabled=true; btn.textContent='Clearing…';
+  try{
+    for(const col of ['mvotes','tasks']) for(let i=0;i<20;i++){
+      const snap = await S.fs.collection(col).limit(400).get();
+      if(snap.empty) break;
+      const b = S.fs.batch(); snap.docs.forEach(d=>b.delete(d.ref)); await b.commit();
+    }
+    msg.textContent='Cleared. On your own phone, reload with ?reset on the end to get your dots back.';
+  }catch(e){ msg.textContent="Couldn't delete everything. Check you're signed in as host and the rules are published."; }
+  btn.disabled=false; btn.textContent='Clear everything';
+});
+
+/* ---------- boot ---------- */
+function renderAll(){ renderAdd(); renderMatrix(); renderResults(); renderHost(); }
+(function start(){
+  if(/[?&]reset/.test(location.search)){ ME = {votes:{}, group:ME.group}; save(); }
+  const h = (location.hash||'').slice(1);
+  setView({matrix:'matrix', results:'res', res:'res', votes:'res', host:'host'}[h] || 'add');
+  boot();
+})();
+function boot(){
+  if(!window.firebase) return;
+  try{ firebase.initializeApp(firebaseConfig); S.fs = firebase.firestore(); S.auth = firebase.auth(); }catch(e){ return; }
+  S.auth.onAuthStateChanged(async u=>{
+    S.user = u || null; S.host = false;
+    if(u){ try{ await S.fs.collection('config').doc('hostcheck').set({at:firebase.firestore.FieldValue.serverTimestamp()}); S.host = true; }catch(e){} }
+    if(S.host) $('t-host').hidden = false;
+    renderHost();
+  });
+  S.fs.collection('config').doc('mapper').onSnapshot(snap=>{
+    const d = snap.exists ? snap.data() : {};
+    S.open = d.open!==false; S.voting = d.voting===true;
+    renderAll();
+  }, ()=>{});
+  let tm; const later = ()=>{ clearTimeout(tm); tm = setTimeout(renderAll, 120); };
+  S.fs.collection('tasks').onSnapshot(snap=>{
+    S.tasks = snap.docs.map(d=>{ const x=d.data()||{}; return {id:d.id, text:String(x.text||''), group:String(x.group||''), tag:TAGS[x.tag]?x.tag:'', impact:['high','low'].includes(x.impact)?x.impact:'', effort:['high','low'].includes(x.effort)?x.effort:'', at:x.at&&x.at.toMillis?x.at.toMillis():0}; }).sort((a,b)=>a.at-b.at);
+    later();
+  }, ()=>{});
+  S.fs.collection('mvotes').onSnapshot(snap=>{
+    S.votes = snap.docs.map(d=>({id:d.id, t:String((d.data()||{}).t||'')}));
+    later();
+  }, ()=>{});
+  renderAll();
+}
+</script>
+</body>
+</html>
